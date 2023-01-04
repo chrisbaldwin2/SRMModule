@@ -1,0 +1,8 @@
+cmake_minimum_required (VERSION 3.25)
+project (SRMModule)
+add_subdirectory (src) 
+add_subdirectory (test)
+enable_testing ()
+set(EXECUTABLE_OUTPUT_PATH ${SRMModule_SOURCE_DIR}/bin CACHE PATH "Bin directory" FORCE)
+set(CMAKE_BUILD_DIRECTORY ${SRMModule_SOURCE_DIR}/build)
+add_test (NAME MyTest COMMAND Test)
