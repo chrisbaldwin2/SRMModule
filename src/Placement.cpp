@@ -34,16 +34,22 @@ float PlacementNode::get_mem()
     return this->mem_factor;
 }
 
-void PlacementNode::allocate_all_blocks()
+// Returns the number of blocks allocated
+int PlacementNode::allocate_all_blocks()
 {
+    int r_blocks = blocks;
     // Send required messages to node
     this->blocks = 0;
+    return r_blocks
 } 
 
-void PlacementNode::allocate_blocks(int num_blocks) 
+// Returns the number of blocks allocated
+int PlacementNode::allocate_blocks(int num_blocks) 
 {
+    int r_blocks = std::min(num_blocks, blocks);
     // Send required messages to node
-    this->blocks -= num_blocks;
+    this->blocks -= r_blocks;
+    return r_blocks;
 }
 
 PlacementNode::PlacementNode(int index, int blocks) 
