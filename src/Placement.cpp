@@ -11,7 +11,7 @@ bool PlacementNode::cmp(PlacementNode a, PlacementNode b)
 
 bool PlacementNode::mem_cmp(PlacementNode a, PlacementNode b)
 {
-    return a.get_mem() > b.get_mem();
+    return a.get_mem_factor() > b.get_mem_factor();
 }
 
 int PlacementNode::get_index() 
@@ -24,12 +24,17 @@ int PlacementNode::get_blocks()
     return this->blocks;
 }
 
+int PlacementNode::get_max_blocks() 
+{
+    return this->max_blocks;
+}
+
 void PlacementNode::set_mem_factor(float mem_factor) 
 {
     this->mem_factor = mem_factor;
 }
 
-float PlacementNode::get_mem() 
+float PlacementNode::get_mem_factor() 
 {
     return this->mem_factor;
 }
@@ -52,10 +57,29 @@ int PlacementNode::allocate_blocks(int num_blocks)
     return r_blocks;
 }
 
+// Returns the number of blocks freed
+int PlacementNode::free_blocks(int num_blocks) 
+{
+    int r_blocks = std::min(num_blocks, max_blocks - blocks);
+    // Send required messages to node
+    this->blocks += r_blocks;
+    return r_blocks;
+}
+
+// Returns the number of blocks freed
+int PlacementNode::free_all_blocks() 
+{
+    int r_blocks = blocks;
+    // Send required messages to node
+    this->blocks = max_blocks;
+    return r_blocks;
+}
+
 PlacementNode::PlacementNode(int index, int blocks) 
 {
     this->index = index;
     this->blocks = blocks;
+    this->max_blocks = blocks;
     this->mem_factor = 1.0;
 }
 
@@ -127,7 +151,7 @@ PlacementStatus Placement::mem_allocate(int num_blocks)
 
     for(int i=0; i<nodes.size(); i++)
     {
-        float mem_factor = nodes[i].get_mem() / mem_cap;
+        float mem_factor = nodes[i].get_mem_factor() / mem_cap;
         int rem_nodes = nodes.size() - i;
         int i_srm_blocks = srm_blocks(mem_factor, num_blocks);
         // The number of blocks to be removed from the node
@@ -157,7 +181,7 @@ int Placement::avail_blocks()
 float Placement::mem_cap()
 {
     float mem_cap = 0;
-    for(auto n : nodes) mem_cap += n.get_mem();
+    for(auto n : nodes) mem_cap += n.get_mem_factor();
     print_mem(nodes);
     return mem_cap;
 }
@@ -196,7 +220,7 @@ void print_mem(std::vector<PlacementNode> nodes){
     
     for(int i=0; i<nodes.size(); i++)
     {
-        std::cout << nodes[i].get_index() << ":" << nodes[i].get_mem() << "\t";
+        std::cout << nodes[i].get_index() << ":" << nodes[i].get_mem_factor() << "\t";
     }
     std::cout << std::endl;
 }

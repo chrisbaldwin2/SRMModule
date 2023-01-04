@@ -1,6 +1,7 @@
 #ifndef __placement_h__
 #define __placement_h__
 
+#define BAD -1
 
 typedef enum PlacementStatus
 {
@@ -19,14 +20,18 @@ class PlacementNode
 {
   private:
     int index;
+    int max_blocks;
     int blocks;
     float mem_factor;
   public:
     PlacementNode(int index, int blocks);
     int get_index();
     int get_blocks();
+    int get_max_blocks();
     void set_mem_factor(float mem_factor);
-    float get_mem();
+    float get_mem_factor();
+    int free_blocks(int num_blocks);
+    int free_all_blocks();
     int allocate_blocks(int num_blocks);
     int allocate_all_blocks();
     static bool cmp(PlacementNode a, PlacementNode b);
