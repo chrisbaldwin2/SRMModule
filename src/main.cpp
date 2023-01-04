@@ -237,6 +237,11 @@ int mem_placement_test()
     PlacementStatus s;
     Placement placement(num_blocks, blocks);
 
+    for(int i=0; i<num_blocks; i++)
+    {
+        placement.node_hearbeat({i, static_cast<float>(.5+(i*.1))});
+    }
+
     s = placement.mem_allocate(10);
     assert(s == PlacementStatus::GOOD);
     s = placement.mem_allocate(7);
@@ -254,6 +259,7 @@ int mem_placement_test()
 int main(int argc, char const *argv[])
 {
     flat_placement_test();
+    mem_placement_test();
 
     return 0;
 }
