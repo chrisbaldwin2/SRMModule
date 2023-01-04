@@ -27,8 +27,8 @@ class PlacementNode
     int get_blocks();
     void set_mem_factor(float mem_factor);
     float get_mem();
-    void allocate_blocks(int num_blocks);
-    void allocate_all_blocks();
+    int allocate_blocks(int num_blocks);
+    int allocate_all_blocks();
     static bool cmp(PlacementNode a, PlacementNode b);
     static bool mem_cmp(PlacementNode a, PlacementNode b);
 };

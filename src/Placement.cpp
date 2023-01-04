@@ -40,7 +40,7 @@ int PlacementNode::allocate_all_blocks()
     int r_blocks = blocks;
     // Send required messages to node
     this->blocks = 0;
-    return r_blocks
+    return r_blocks;
 } 
 
 // Returns the number of blocks allocated
@@ -113,13 +113,10 @@ PlacementStatus Placement::flat_allocate(int num_blocks)
 
 PlacementStatus Placement::mem_allocate(int num_blocks)
 {
-    // The number of blocks to remove from each blocks
-    int base_blocks = num_blocks / nodes.size();
-    int rem_blocks = num_blocks % nodes.size();
     int accum_blocks = 0;
     int total_blocks = 0;
     float mem_cap = this->mem_cap();
-    std::sort(nodes.begin(), nodes.end(), PlacementNode::mem_cmp); 
+    std::sort(nodes.begin(), nodes.end(), PlacementNode::cmp); 
     print_nodes(nodes);
     
     if(avail_blocks() < num_blocks)
@@ -131,37 +128,21 @@ PlacementStatus Placement::mem_allocate(int num_blocks)
     for(int i=0; i<nodes.size(); i++)
     {
         float mem_factor = nodes[i].get_mem() / mem_cap;
-        int sub_blocks = srm_blocks(mem_factor, num_blocks);
-        if(nodes[i].get_blocks() < sub_blocks)
-        {
-            std::cout << "  block " << nodes[i].get_index() << ":" << nodes[i].get_blocks() 
-                      << " less than " << sub_blocks << std::endl;
-            accum_blocks += sub_blocks - nodes[i].get_blocks();
-            std::cout << "Accum " << accum_blocks << std::endl;
-            nodes[i].allocate_all_blocks();
-            total_blocks += nodes[i].get_blocks();
-            continue;
-        }
-        if(nodes[i].get_blocks() == sub_blocks)
-        {
-            nodes[i].allocate_all_blocks();
-            total_blocks += nodes[i].get_blocks();
-            continue;
-        }
         int rem_nodes = nodes.size() - i;
-        std::cout << "Total " << total_blocks << " Requested " << sub_blocks << " Accum " << static_cast<int>(ceil(accum_blocks / rem_nodes));
-        sub_blocks = std::min(sub_blocks + static_cast<int>(ceil(accum_blocks / rem_nodes)), num_blocks-total_blocks);
-        std::cout << " Next " << sub_blocks << std::endl;
-        total_blocks += sub_blocks;
-        accum_blocks -= ceil(accum_blocks / rem_nodes);
-        nodes[i].allocate_blocks(sub_blocks);
+        int i_srm_blocks = srm_blocks(mem_factor, num_blocks);
+        // The number of blocks to be removed from the node
+        int sub_blocks = std::min(i_srm_blocks + static_cast<int>(ceil(accum_blocks / rem_nodes)),  num_blocks - total_blocks);
+        // The number of blocks which could be allocated to the node
+        int rm_blocks = nodes[i].allocate_blocks(sub_blocks);
+        total_blocks += rm_blocks;
+        // If negative, accumulated blocks have been harvested otherwise accumulated blocks are added
+        accum_blocks += i_srm_blocks - rm_blocks;
     }
     std::cout << "Total " << total_blocks << " Requested " << num_blocks << std::endl;
     if(total_blocks < num_blocks)
     {
-
+        return PlacementStatus::RETRY;
     }
-    assert(total_blocks == num_blocks);
 
     return PlacementStatus::GOOD;
 }
