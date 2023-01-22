@@ -2,6 +2,8 @@
 #define __placement_h__
 
 #define BAD -1
+#include <vector>
+#define default_blocks 1024
 
 typedef enum PlacementStatus
 {
@@ -63,5 +65,31 @@ int srm_blocks(float mem_prct, int needed_blocks);
 void print_nodes(std::vector<int> nodes);
 void print_nodes(std::vector<PlacementNode> nodes);
 void print_mem(std::vector<PlacementNode> nodes);
+
+
+/** Subtract stop and start timepoints and cast it to required unit. 
+  * Predefined units are nanoseconds, microseconds, milliseconds,
+  * seconds, minutes, hours. Count converts the chrono type to float type.
+  */
+
+class MemTimer
+{
+  private:
+    std::chrono::high_resolution_clock::time_point start;
+    std::chrono::high_resolution_clock::time_point stop;
+    float duration;
+    float diff_clocks(std::chrono::high_resolution_clock::time_point start, std::chrono::high_resolution_clock::time_point stop);
+  public:
+    MemTimer();
+    void start_timer();
+    void stop_timer();
+    // Returns the duration in microseconds
+    float get_duration();
+    /** Get the time it takes to read num_blocks bytes. 
+      * The time is returned in microseconds.
+      */
+    float test_mem_time(const uint num_blocks);
+    static float time_to_bandwidth(const uint num_blocks, const float time);
+};
 
 #endif

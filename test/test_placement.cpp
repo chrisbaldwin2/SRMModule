@@ -108,11 +108,35 @@ int node_test()
     return 0;
 }
 
+int test_srm()
+{
+    float mem_prct = .8;
+    int needed_blocks = 10;
+
+    auto result = srm_blocks(mem_prct, needed_blocks);
+    assert(result == 8);
+    mem_prct = .5;
+    result = srm_blocks(mem_prct, needed_blocks);
+    assert(result == 5);
+    needed_blocks = 5;
+    result = srm_blocks(mem_prct, needed_blocks);
+    assert(result == 3);
+    mem_prct = -3;
+    try {
+        result = srm_blocks(mem_prct, needed_blocks);
+    }
+    catch( const std::invalid_argument& e ) {
+        std::cout << e.what() << std::endl; 
+        return 0;
+    }
+    return -1;
+}
+
 int main(int argc, char const *argv[])
 {
     flat_placement_test();
     mem_placement_test();
     node_test();
-
+    test_srm();
     return 0;
 }

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <numeric>
 #include <vector>
+#include <stdexcept>
 #include "placement.h"
 
 bool PlacementNode::cmp(PlacementNode a, PlacementNode b)
@@ -193,6 +194,9 @@ void Placement::node_hearbeat(PlacementHeartbeat heartbeat)
 
 int srm_blocks(float mem_prct, int num_blocks)
 {
+    if ( mem_prct < 0 ) {
+        throw std::invalid_argument( "received negative mem_prct" );
+    }
     int blocks = round(mem_prct * num_blocks);
     std::cout << "mem_prct " << mem_prct << " num_blocks " << num_blocks << " blocks " << blocks << std::endl;
     return blocks;

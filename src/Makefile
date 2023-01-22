@@ -140,6 +140,30 @@ Placement/fast:
 	cd /Users/chris/Programs/SRMModule && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/Placement.dir/build.make src/CMakeFiles/Placement.dir/build
 .PHONY : Placement/fast
 
+mem_daemon.o: mem_daemon.cpp.o
+.PHONY : mem_daemon.o
+
+# target to build an object file
+mem_daemon.cpp.o:
+	cd /Users/chris/Programs/SRMModule && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/Placement.dir/build.make src/CMakeFiles/Placement.dir/mem_daemon.cpp.o
+.PHONY : mem_daemon.cpp.o
+
+mem_daemon.i: mem_daemon.cpp.i
+.PHONY : mem_daemon.i
+
+# target to preprocess a source file
+mem_daemon.cpp.i:
+	cd /Users/chris/Programs/SRMModule && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/Placement.dir/build.make src/CMakeFiles/Placement.dir/mem_daemon.cpp.i
+.PHONY : mem_daemon.cpp.i
+
+mem_daemon.s: mem_daemon.cpp.s
+.PHONY : mem_daemon.s
+
+# target to generate assembly for a file
+mem_daemon.cpp.s:
+	cd /Users/chris/Programs/SRMModule && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/Placement.dir/build.make src/CMakeFiles/Placement.dir/mem_daemon.cpp.s
+.PHONY : mem_daemon.cpp.s
+
 placement.o: placement.cpp.o
 .PHONY : placement.o
 
@@ -174,6 +198,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... Placement"
+	@echo "... mem_daemon.o"
+	@echo "... mem_daemon.i"
+	@echo "... mem_daemon.s"
 	@echo "... placement.o"
 	@echo "... placement.i"
 	@echo "... placement.s"
