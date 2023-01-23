@@ -2,17 +2,6 @@
 #include <chrono>
 #include "placement.h"
 
-float MemTimer::diff_clocks(std::chrono::high_resolution_clock::time_point start, std::chrono::high_resolution_clock::time_point stop)
-{
-    // Subtract stop and start timepoints and
-    // cast it to required unit. Predefined units
-    // are nanoseconds, microseconds, milliseconds,
-    // seconds, minutes, hours. Count converts the 
-    // chrono type to float type.
-    float duration = std::chrono::duration<float, std::chrono::microseconds::period>(stop - start).count();
-    return duration;
-}
-
 float MemTimer::test_mem_time(const uint num_blocks = default_blocks)
 {
     char* buf = new char[num_blocks];
@@ -31,6 +20,17 @@ float MemTimer::test_mem_time(const uint num_blocks = default_blocks)
     
     delete [] buf;
 
+    return duration;
+}
+
+float MemTimer::diff_clocks(std::chrono::high_resolution_clock::time_point start, std::chrono::high_resolution_clock::time_point stop)
+{
+    // Subtract stop and start timepoints and
+    // cast it to required unit. Predefined units
+    // are nanoseconds, microseconds, milliseconds,
+    // seconds, minutes, hours. Count converts the 
+    // chrono type to float type.
+    float duration = std::chrono::duration<float, std::chrono::microseconds::period>(stop - start).count();
     return duration;
 }
 
