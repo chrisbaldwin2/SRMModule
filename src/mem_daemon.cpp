@@ -61,6 +61,6 @@ float MemTimer::time_to_bandwidth(const uint num_blocks, const float time)
 MemTimer::MemTimer()
 {
     start = std::chrono::high_resolution_clock::now();
-    stop = std::chrono::high_resolution_clock::now();
+    stop = start;
     duration = 0;
 }

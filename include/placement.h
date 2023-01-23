@@ -89,6 +89,9 @@ class MemTimer
       * The time is returned in microseconds.
       */
     float test_mem_time(const uint num_blocks);
+    /** Get the bandwidth of reading num_blocks bytes in time.
+      * The bandwidth is returned in megabytes per second.
+      */
     static float time_to_bandwidth(const uint num_blocks, const float time);
 };
 
