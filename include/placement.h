@@ -29,9 +29,11 @@ class PlacementNode
     PlacementNode(int index, int blocks);
     int get_index();
     int get_blocks();
+    int get_used_blocks();
     int get_max_blocks();
     void set_mem_factor(float mem_factor);
     float get_mem_factor();
+    bool node_full();
     int free_blocks(int num_blocks);
     int free_all_blocks();
     int allocate_blocks(int num_blocks);
@@ -44,7 +46,7 @@ class Placement
 {
   private:
     std::vector<PlacementNode> nodes; // # nodes, value of # blocks
-    
+    int incremental_block_allocate(int num_blocks = 1);
   public:
     Placement(int num_nodes, int blocks_per_node);
     // The total mem capacity of all nodes
@@ -53,11 +55,12 @@ class Placement
     int avail_blocks();
     // Greedily allocates blocks, does not use memory bandwidth
     PlacementStatus flat_allocate(int num_blocks);
-    // Greedily allocates blocks, does not use memory bandwidth
+    // Allocates blocks based on memory bandwidth
     PlacementStatus mem_allocate(int num_blocks);
     // Updates the node memory bandwidth
     void node_hearbeat(PlacementHeartbeat heartbeat);
-
+    void print_nodes();
+    void print_mem();
 };
 
 int srm_blocks(float mem_prct, int needed_blocks);

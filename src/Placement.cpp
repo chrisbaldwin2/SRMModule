@@ -25,6 +25,11 @@ int PlacementNode::get_blocks()
     return this->blocks;
 }
 
+int PlacementNode::get_used_blocks() 
+{
+    return this->max_blocks - this->blocks;
+}
+
 int PlacementNode::get_max_blocks() 
 {
     return this->max_blocks;
@@ -38,6 +43,11 @@ void PlacementNode::set_mem_factor(float mem_factor)
 float PlacementNode::get_mem_factor() 
 {
     return this->mem_factor;
+}
+
+bool PlacementNode::node_full()
+{
+    return this->blocks == 0;
 }
 
 // Returns the number of blocks allocated
@@ -103,7 +113,7 @@ PlacementStatus Placement::flat_allocate(int num_blocks)
     int rem_blocks = num_blocks % nodes.size();
     int accum_blocks = 0;
     std::sort(nodes.begin(), nodes.end(), PlacementNode::cmp); 
-    print_nodes(nodes);
+    print_nodes();
 
     if(avail_blocks() < num_blocks)
     {
@@ -136,13 +146,29 @@ PlacementStatus Placement::flat_allocate(int num_blocks)
     return PlacementStatus::GOOD;
 }
 
+/** Memory allocation Notes
+  * 
+  * Can either try to find the optimal allocation or just allocate the blocks incrementally
+  * 
+  * Incermental allocation:
+  *  - Creates a vector of current node latency + incremental latency (incremental latency = 1 / mem_factor)
+  *  - Sorts the vector by latency
+  *  - Choose the node with lowest incremental latency
+  * 
+  * Optimal allocation:
+  *  - Make a "schedule" of blocks which should be allocated to each node
+  *  - Diff the schedule from the current allocation
+  *  - Sort based on the diff
+  *  - Allocate the blocks to the nodes with the highest diff
+  */
+ 
 PlacementStatus Placement::mem_allocate(int num_blocks)
 {
     int accum_blocks = 0;
     int total_blocks = 0;
     float mem_cap = this->mem_cap();
     std::sort(nodes.begin(), nodes.end(), PlacementNode::cmp); 
-    print_nodes(nodes);
+    // print_nodes();
     
     if(avail_blocks() < num_blocks)
     {
@@ -152,9 +178,9 @@ PlacementStatus Placement::mem_allocate(int num_blocks)
 
     for(int i=0; i<nodes.size(); i++)
     {
-        float mem_factor = nodes[i].get_mem_factor() / mem_cap;
+        float mem_prct = nodes[i].get_mem_factor() / mem_cap;
         int rem_nodes = nodes.size() - i;
-        int i_srm_blocks = srm_blocks(mem_factor, num_blocks);
+        int i_srm_blocks = srm_blocks(mem_prct, num_blocks);
         // The number of blocks to be removed from the node
         int sub_blocks = std::min(i_srm_blocks + static_cast<int>(ceil(accum_blocks / rem_nodes)),  num_blocks - total_blocks);
         // The number of blocks which could be allocated to the node
@@ -162,8 +188,14 @@ PlacementStatus Placement::mem_allocate(int num_blocks)
         total_blocks += rm_blocks;
         // If negative, accumulated blocks have been harvested otherwise accumulated blocks are added
         accum_blocks += i_srm_blocks - rm_blocks;
+        std::cout << i << ": rem_nodes " << rem_nodes << " mem_prct " << mem_prct << " srm_blocks " << i_srm_blocks << " sub_blocks " << sub_blocks << " rm_blocks " << rm_blocks << std::endl;
     }
-    std::cout << "Total " << total_blocks << " Requested " << num_blocks << std::endl;
+
+    int scrap_blocks = num_blocks-total_blocks+accum_blocks;
+    std::cout << "Scrap " << scrap_blocks << std::endl;
+    total_blocks += incremental_block_allocate(scrap_blocks);
+    print_nodes();
+    std::cout << "Total " << total_blocks << " Requested " << num_blocks << " mem_cap " << mem_cap << std::endl;
     if(total_blocks < num_blocks)
     {
         return PlacementStatus::RETRY;
@@ -183,7 +215,7 @@ float Placement::mem_cap()
 {
     float mem_cap = 0;
     for(auto n : nodes) mem_cap += n.get_mem_factor();
-    print_mem(nodes);
+    // print_mem();
     return mem_cap;
 }
 
@@ -192,13 +224,71 @@ void Placement::node_hearbeat(PlacementHeartbeat heartbeat)
     nodes[heartbeat.node_id].set_mem_factor(heartbeat.mem_factor);
 }
 
+void Placement::print_nodes()
+{
+    for(int i=0; i<nodes.size(); i++)
+    {
+        std::cout << nodes[i].get_index() << ":" << nodes[i].get_blocks() << "\t";
+    }
+    std::cout << std::endl;
+}
+
+void Placement::print_mem()
+{
+    for(int i=0; i<nodes.size(); i++)
+    {
+        std::cout << nodes[i].get_index() << ":" << nodes[i].get_mem_factor() << "\t";
+    }
+    std::cout << "Cap: " << mem_cap() << std::endl;
+}
+
+int Placement::incremental_block_allocate(int num_blocks)
+{
+    std::vector<std::tuple<int, float>> nodes_latency;
+    for(int i=0; i<nodes.size(); i++)
+    {
+        if(!nodes[i].node_full())
+        {
+            nodes_latency.push_back(std::tuple(i, (nodes[i].get_used_blocks() + 1) / nodes[i].get_mem_factor()));
+            std::cout << i << ": " << std::get<float>(nodes_latency[i]) << std::endl;
+        }
+    }
+    
+    int blocks = 0;
+    for(; blocks < num_blocks; blocks++)
+    {
+        std::sort(nodes_latency.begin(), nodes_latency.end(), 
+            [](std::tuple<int, float> a, std::tuple<int, float> b){return std::get<float>(a) < std::get<float>(b);});
+        
+        for(int i=0; i<nodes.size(); i++)
+        {
+            std::cout << std::get<int>(nodes_latency[i]) << ": latency " << std::get<float>(nodes_latency[i]) << " full " << nodes[std::get<int>(nodes_latency[i])].node_full() << std::endl;
+            // if the node is not full, allocate a block
+            if (!nodes[std::get<int>(nodes_latency[i])].node_full()) 
+            {
+                if(nodes[std::get<int>(nodes_latency[i])].allocate_blocks(1) == 1)
+                {
+                    nodes_latency[i] = std::tuple(std::get<int>(nodes_latency[i]), (std::get<float>(nodes_latency[i]) + (1 / nodes[std::get<int>(nodes_latency[i])].get_mem_factor())));
+                    goto next_loop;
+                }
+            }
+        }
+        // If we go through all nodes without allocating a block, throw an error
+        throw new std::runtime_error("Could not allocate block in incremental_block_allocate");
+        // Good allocation
+      next_loop:
+        continue;
+    }
+    return blocks;
+}
+
 int srm_blocks(float mem_prct, int num_blocks)
 {
     if ( mem_prct < 0 ) {
         throw std::invalid_argument( "received negative mem_prct" );
     }
-    int blocks = round(mem_prct * num_blocks);
-    std::cout << "mem_prct " << mem_prct << " num_blocks " << num_blocks << " blocks " << blocks << std::endl;
+    int blocks = floor(mem_prct * num_blocks);
+    std::cout << "mem_prct " << mem_prct << " raw_blocks " << mem_prct * num_blocks << " num_blocks " << num_blocks << " blocks " << blocks << std::endl;
     return blocks;
 }
 

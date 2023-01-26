@@ -65,6 +65,42 @@ int mem_placement_test()
     return 0;
 }
 
+
+int mem_placement_slides_test()
+{
+    int blocks = 6;
+    int num_blocks = 6;
+    PlacementStatus s;
+    Placement placement(num_blocks, blocks);
+    placement.print_nodes();
+
+    placement.node_hearbeat({0, static_cast<float>(.9)});
+    placement.node_hearbeat({1, static_cast<float>(.9)});
+    placement.node_hearbeat({2, static_cast<float>(.7)});
+    placement.node_hearbeat({3, static_cast<float>(.4)});
+    placement.node_hearbeat({4, static_cast<float>(.1)});
+    placement.node_hearbeat({5, static_cast<float>(.1)});
+
+    auto mem_cap = placement.mem_cap();
+    assert(mem_cap == (float)(.9+.9+.7+.4+.1+.1));
+
+    s = placement.mem_allocate(12);
+    assert(s == PlacementStatus::GOOD);
+    auto avail_blocks = placement.avail_blocks();
+    assert(avail_blocks == blocks * num_blocks - 12);
+    placement.print_nodes();
+    // s = placement.mem_allocate(7);
+    // assert(s == PlacementStatus::GOOD);
+    // s = placement.mem_allocate(4);
+    // assert(s == PlacementStatus::GOOD);
+    // s = placement.mem_allocate(27);
+    // assert(s == PlacementStatus::GOOD);
+    // s = placement.mem_allocate(60);
+    // assert(s == PlacementStatus::OUT_OF_SPACE);
+
+    return 0;
+}
+
 int node_test()
 {
     int max_blocks = 10;
@@ -120,7 +156,7 @@ int test_srm()
     assert(result == 5);
     needed_blocks = 5;
     result = srm_blocks(mem_prct, needed_blocks);
-    assert(result == 3);
+    assert(result == 2);
     mem_prct = -3;
     try {
         result = srm_blocks(mem_prct, needed_blocks);
@@ -134,9 +170,12 @@ int test_srm()
 
 int main(int argc, char const *argv[])
 {
+    mem_placement_slides_test();
     flat_placement_test();
     mem_placement_test();
     node_test();
     test_srm();
+
+    std::cout << "\n~~~~ All tests passed :: Exiting test_placement ~~~~" << std::endl;
     return 0;
 }
